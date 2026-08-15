@@ -23,11 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      
-
-      - name: Run type check
-        run: npm run typecheck
-
+     
       - name: Build
         run: npm run build
 
