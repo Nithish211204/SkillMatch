@@ -1,35 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, FileText, CheckCircle2, Shield, Send, Check, Banknote } from 'lucide-react';
+import { X, User, FileText, CheckCircle2, Shield, Send, Check, Banknote, UploadCloud } from 'lucide-react';
 
 export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) {
   const [formData, setFormData] = useState({
-    fullName: "Rahul Sharma",
-    email: "rahulsharma@email.com",
+    fullName: "",
+    email: "",
     countryCode: "+91",
-    phone: "98765 43210",
-    currentLocation: "Bangalore, Karnataka",
-    linkedin: "https://linkedin.com/in/rahulsharma",
-    portfolio: "https://rahulsharma.dev",
-    fileName: "Rahul_Sharma_Resume.pdf",
-    fileSize: "1.2 MB",
-    additionalInfo: "I have 2+ years of experience building scalable web applications using React and Node.js. I'm passionate about creating clean, user-friendly products."
+    phone: "",
+    currentLocation: "",
+    linkedin: "",
+    portfolio: "",
+    fileName: "",
+    fileSize: "",
+    additionalInfo: ""
   });
 
   const [submitted, setSubmitted] = useState(false);
 
+  // Load from parsed resume or saved profile cache if available
   useEffect(() => {
-    const saved = localStorage.getItem('user_profile_cache');
-    if (saved) {
-      try {
-        setFormData(prev => ({ ...prev, ...JSON.parse(saved) }));
-      } catch (e) {}
+    if (isOpen) {
+      const saved = localStorage.getItem('user_profile_cache');
+      const parsedResume = localStorage.getItem('parsed_resume');
+      
+      if (parsedResume) {
+        try {
+          const parsed = JSON.parse(parsedResume);
+          setFormData(prev => ({
+            ...prev,
+            fullName: parsed.fullName || prev.fullName,
+            email: parsed.email || prev.email,
+            phone: parsed.phone || prev.phone,
+            fileName: parsed.fileName || prev.fileName,
+            fileSize: parsed.fileSize || prev.fileSize
+          }));
+        } catch (e) {}
+      } else if (saved) {
+        try {
+          setFormData(prev => ({ ...prev, ...JSON.parse(saved) }));
+        } catch (e) {}
+      }
     }
   }, [isOpen]);
 
   if (!isOpen || !job) return null;
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormData(prev => ({
+      ...prev,
+      fileName: file.name,
+      fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.fileName) {
+      alert("Please attach a resume before submitting.");
+      return;
+    }
+
     localStorage.setItem('user_profile_cache', JSON.stringify(formData));
     
     const currentApplications = JSON.parse(localStorage.getItem('user_applications') || '[]');
@@ -89,6 +121,7 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                   <input
                     type="text"
                     required
+                    placeholder="e.g. John Doe"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -103,6 +136,7 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                     <input
                       type="email"
                       required
+                      placeholder="e.g. name@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -119,8 +153,9 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                         <span>+91</span>
                       </div>
                       <input
-                        type="text"
+                        type="tel"
                         required
+                        placeholder="98765 43210"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-w-0"
@@ -137,6 +172,7 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                     <input
                       type="text"
                       required
+                      placeholder="e.g. Hyderabad, Telangana"
                       value={formData.currentLocation}
                       onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -148,6 +184,7 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                     </label>
                     <input
                       type="url"
+                      placeholder="https://linkedin.com/in/username"
                       value={formData.linkedin}
                       onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -163,28 +200,46 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
                 <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
                   <FileText className="w-4 h-4" />
                 </div>
-                Resume Attachment
+                Resume Attachment <span className="text-rose-500">*</span>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/20 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    PDF
+              {formData.fileName ? (
+                <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                      PDF
+                    </div>
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-slate-800 truncate">{formData.fileName}</p>
+                      <p className="text-[10px] text-slate-400">{formData.fileSize || "Attached"}</p>
+                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 hidden sm:block" />
                   </div>
-                  <div className="truncate">
-                    <p className="text-xs font-bold text-slate-800 truncate">{formData.fileName}</p>
-                    <p className="text-[10px] text-slate-400">{formData.fileSize}</p>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 hidden sm:block" />
+
+                  <label className="px-3 py-1.5 rounded-xl border border-indigo-300 text-indigo-600 font-semibold text-xs hover:bg-indigo-50 cursor-pointer shrink-0">
+                    Change File
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
                 </div>
-
-                <button
-                  type="button"
-                  className="px-3 py-1.5 rounded-xl border border-indigo-300 text-indigo-600 font-semibold text-xs hover:bg-indigo-50 shrink-0"
-                >
-                  Change File
-                </button>
-              </div>
+              ) : (
+                <label className="border-2 border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50/50 hover:bg-indigo-50/20 transition rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer text-center">
+                  <UploadCloud className="w-7 h-7 text-indigo-500 mb-1.5" />
+                  <span className="text-xs font-bold text-slate-700">Click to upload your resume</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">PDF, DOC, DOCX (Max 5MB)</span>
+                  <input
+                    type="file"
+                    required
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              )}
             </div>
 
             {/* Note */}
@@ -194,6 +249,7 @@ export default function ApplyModal({ job, isOpen, onClose, onSuccessfulApply }) 
               </label>
               <textarea
                 rows={3}
+                placeholder="Tell us why you are a great fit for this position..."
                 value={formData.additionalInfo}
                 onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
                 className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
