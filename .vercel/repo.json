@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_1c8mG8bsbGLAAsMznMlJjItXUvKr",
+      "name": "skill-match",
+      "directory": ".",
+      "orgId": "team_eVHO0PR9cFqOjm5nKAeNgLO3"
+    }
+  ]
+}
